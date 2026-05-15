@@ -16,7 +16,7 @@ type Props = {
 };
 
 const GOOGLE_ICON_URI =
-  "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg";
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/48px-Google_%22G%22_logo.svg.png";
 
 export function GoogleButton({ label, onPress, loading, disabled }: Props) {
   return (

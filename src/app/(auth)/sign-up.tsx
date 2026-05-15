@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -101,7 +102,7 @@ export default function SignUpScreen() {
   const onVerify = useCallback(async () => {
     if (!isLoaded) return;
 
-    if (!code.trim() || code.trim().length < 4) {
+    if (!/^\d{6}$/.test(code.trim())) {
       setErrors((e) => ({ ...e, code: "Enter the 6-digit code we emailed you" }));
       return;
     }
@@ -141,7 +142,28 @@ export default function SignUpScreen() {
       if (result.createdSessionId && result.setActive) {
         await result.setActive({ session: result.createdSessionId });
         router.replace("/(app)/home");
+        return;
       }
+
+      const authType = result.authSessionResult?.type;
+      if (authType === "cancel" || authType === "dismiss") {
+        return;
+      }
+
+      if (result.signUp?.status === "missing_requirements") {
+        const missing = result.signUp.missingFields ?? [];
+        const detail =
+          missing.length > 0
+            ? `We still need: ${missing.join(", ")}. Please complete the form manually.`
+            : "Some required information is missing. Please complete the form manually.";
+        Alert.alert("Almost there", detail);
+        return;
+      }
+
+      Alert.alert(
+        "Google sign-up didn't complete",
+        "We couldn't finish signing you up. Please try again.",
+      );
     } catch (err) {
       const message = isClerkAPIResponseError(err)
         ? err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message
@@ -285,8 +307,28 @@ export default function SignUpScreen() {
 
                   <Text style={styles.terms}>
                     By creating an account you agree to our{" "}
-                    <Text style={styles.termsLink}>Terms</Text> and{" "}
-                    <Text style={styles.termsLink}>Privacy Policy</Text>.
+                    <Text
+                      style={styles.termsLink}
+                      accessibilityRole="link"
+                      testID="signup-terms-link"
+                      onPress={() =>
+                        Linking.openURL("https://your-domain.com/terms")
+                      }
+                    >
+                      Terms
+                    </Text>{" "}
+                    and{" "}
+                    <Text
+                      style={styles.termsLink}
+                      accessibilityRole="link"
+                      testID="signup-privacy-link"
+                      onPress={() =>
+                        Linking.openURL("https://your-domain.com/privacy")
+                      }
+                    >
+                      Privacy Policy
+                    </Text>
+                    .
                   </Text>
 
                   <PrimaryButton

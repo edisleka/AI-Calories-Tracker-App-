@@ -14,9 +14,13 @@ if (!publishableKey) {
 }
 
 export default function RootLayout() {
+  if (!publishableKey) {
+    return null;
+  }
+
   return (
     <ClerkProvider
-      publishableKey={publishableKey ?? ""}
+      publishableKey={publishableKey}
       tokenCache={tokenCache}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>

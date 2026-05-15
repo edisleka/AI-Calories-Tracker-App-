@@ -166,7 +166,16 @@ export default function SignInScreen() {
                 error={passwordError}
               />
 
-              <TouchableOpacity style={styles.forgot} hitSlop={8}>
+              <TouchableOpacity
+                style={styles.forgot}
+                hitSlop={8}
+                onPress={() =>
+                  Alert.alert(
+                    "Reset password",
+                    "Password recovery is coming soon. For now, please contact support.",
+                  )
+                }
+              >
                 <Text style={styles.forgotText}>Forgot password?</Text>
               </TouchableOpacity>
 

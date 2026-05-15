@@ -1,8 +1,9 @@
-import { useClerk, useUser } from "@clerk/clerk-expo";
+import { isClerkAPIResponseError, useClerk, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -19,8 +20,15 @@ export default function HomeScreen() {
   const router = useRouter();
 
   const onSignOut = async () => {
-    await signOut();
-    router.replace("/(auth)/sign-in");
+    try {
+      await signOut();
+      router.replace("/(auth)/sign-in");
+    } catch (err) {
+      const message = isClerkAPIResponseError(err)
+        ? err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message
+        : "Sign out failed. Please try again.";
+      Alert.alert("Sign out failed", message ?? "Unknown error");
+    }
   };
 
   return (

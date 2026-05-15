@@ -16,7 +16,7 @@ user profile data.
 
 ## Project structure
 
-```
+```text
 src/
   app/
     _layout.tsx            # ClerkProvider + status bar
@@ -28,7 +28,7 @@ src/
     (app)/
       _layout.tsx          # Guard: redirect signed-out users to /sign-in
       home.tsx             # First protected screen
-  components/               # Reusable UI: AuthInput, PrimaryButton, GoogleButton, Divider
+  components/               # Reusable UI: AuthInput, PrimaryButton, SocialButton, Divider
   constants/theme.ts        # Colors, spacing, radii, shadows, font sizes
   hooks/useWarmUpBrowser.ts # Snappier Android OAuth
   lib/
