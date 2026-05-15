@@ -1,11 +1,24 @@
-import { Text, View, StyleSheet } from "react-native";
+import { useAuth } from "@clerk/clerk-expo";
+import { Redirect } from "expo-router";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { Colors } from "@/constants/theme";
 
 export default function Index() {
-  return (
-    <View style={styles.container}>
-      <Text>Edit src/app/index.tsx to edit this screen.</Text>
-    </View>
-  );
+  const { isLoaded, isSignedIn } = useAuth();
+
+  if (!isLoaded) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (isSignedIn) {
+    return <Redirect href="/(app)/home" />;
+  }
+
+  return <Redirect href="/(auth)/sign-in" />;
 }
 
 const styles = StyleSheet.create({
@@ -13,5 +26,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: Colors.background,
   },
 });
