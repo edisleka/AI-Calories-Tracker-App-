@@ -1,9 +1,11 @@
 import { Stack } from "expo-router";
 import { AuthLoadingScreen } from "@/components/AuthLoadingScreen";
-import { isOAuthInProgress } from "@/lib/oauth-session";
+import { useOAuthInProgress } from "@/lib/oauth-session";
 
 export default function AuthLayout() {
-  if (isOAuthInProgress()) {
+  const oauthInProgress = useOAuthInProgress();
+
+  if (oauthInProgress) {
     return <AuthLoadingScreen />;
   }
 
