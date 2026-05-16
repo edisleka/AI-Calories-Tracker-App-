@@ -1,8 +1,13 @@
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Slot } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SplashController } from "@/components/SplashController";
+
+void SplashScreen.preventAutoHideAsync();
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -14,17 +19,25 @@ if (!publishableKey) {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    if (!publishableKey) {
+      void SplashScreen.hideAsync();
+    }
+  }, []);
+
   if (!publishableKey) {
-    return null;
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar style="dark" />
+      </GestureHandlerRootView>
+    );
   }
 
   return (
-    <ClerkProvider
-      publishableKey={publishableKey}
-      tokenCache={tokenCache}
-    >
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style="dark" />
+        <SplashController />
         <Slot />
       </GestureHandlerRootView>
     </ClerkProvider>

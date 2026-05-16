@@ -1,8 +1,16 @@
-import { isClerkAPIResponseError, useSignIn, useSSO } from "@clerk/clerk-expo";
-import { LinearGradient } from "expo-linear-gradient";
-import { Link, useRouter } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
-import { useCallback, useState } from "react";
+import { AuthInput } from '@/components/AuthInput'
+import { Divider } from '@/components/Divider'
+import { PrimaryButton } from '@/components/PrimaryButton'
+import { GoogleButton } from '@/components/SocialButton'
+import { Colors, FontSizes, Radius, Spacing } from '@/constants/theme'
+import { useWarmUpBrowser } from '@/hooks/useWarmUpBrowser'
+import { setOAuthInProgress } from '@/lib/oauth-session'
+import { ROUTES } from '@/lib/routes'
+import { isClerkAPIResponseError, useSignIn, useSSO } from '@clerk/clerk-expo'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Link, useRouter } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
+import { useCallback, useState } from 'react'
 import {
   Alert,
   Image,
@@ -13,125 +21,135 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { AuthInput } from "@/components/AuthInput";
-import { Divider } from "@/components/Divider";
-import { GoogleButton } from "@/components/SocialButton";
-import { PrimaryButton } from "@/components/PrimaryButton";
-import { Colors, FontSizes, Radius, Spacing } from "@/constants/theme";
-import { useWarmUpBrowser } from "@/hooks/useWarmUpBrowser";
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
-WebBrowser.maybeCompleteAuthSession();
+WebBrowser.maybeCompleteAuthSession()
 
 export default function SignInScreen() {
-  useWarmUpBrowser();
+  useWarmUpBrowser()
 
-  const router = useRouter();
-  const { signIn, setActive, isLoaded } = useSignIn();
-  const { startSSOFlow } = useSSO();
+  const router = useRouter()
+  const { signIn, setActive, isLoaded } = useSignIn()
+  const { startSSOFlow } = useSSO()
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   function validate() {
-    let ok = true;
-    setEmailError(null);
-    setPasswordError(null);
+    let ok = true
+    setEmailError(null)
+    setPasswordError(null)
 
     if (!email.trim()) {
-      setEmailError("Email is required");
-      ok = false;
+      setEmailError('Email is required')
+      ok = false
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("Enter a valid email address");
-      ok = false;
+      setEmailError('Enter a valid email address')
+      ok = false
     }
 
     if (!password) {
-      setPasswordError("Password is required");
-      ok = false;
+      setPasswordError('Password is required')
+      ok = false
     }
 
-    return ok;
+    return ok
   }
 
   const onSignIn = useCallback(async () => {
-    if (!isLoaded || !validate()) return;
+    if (!isLoaded || !validate()) return
 
-    setSubmitting(true);
+    setSubmitting(true)
     try {
       const attempt = await signIn.create({
         identifier: email.trim(),
         password,
-      });
+      })
 
-      if (attempt.status === "complete") {
-        await setActive({ session: attempt.createdSessionId });
-        router.replace("/(app)/home");
+      if (attempt.status === 'complete') {
+        await setActive({ session: attempt.createdSessionId })
+        router.replace(ROUTES.home)
       } else {
         Alert.alert(
-          "Almost there",
-          "Additional steps are required to finish signing in.",
-        );
+          'Almost there',
+          'Additional steps are required to finish signing in.',
+        )
       }
     } catch (err) {
       const message = isClerkAPIResponseError(err)
-        ? err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message
-        : "Something went wrong. Please try again.";
-      Alert.alert("Sign in failed", message ?? "Unknown error");
+        ? (err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message)
+        : 'Something went wrong. Please try again.'
+      Alert.alert('Sign in failed', message ?? 'Unknown error')
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  }, [isLoaded, email, password, signIn, setActive, router]);
+  }, [isLoaded, email, password, signIn, setActive, router])
 
   const onGoogle = useCallback(async () => {
-    if (googleLoading) return;
-    setGoogleLoading(true);
+    if (googleLoading) return
+    setOAuthInProgress(true)
+    setGoogleLoading(true)
     try {
-      const result = await startSSOFlow({ strategy: "oauth_google" });
+      const result = await startSSOFlow({ strategy: 'oauth_google' })
+
+      const authType = result.authSessionResult?.type
+      if (authType === 'cancel' || authType === 'dismiss') {
+        setOAuthInProgress(false)
+        return
+      }
 
       if (result.createdSessionId && result.setActive) {
-        await result.setActive({ session: result.createdSessionId });
-        router.replace("/(app)/home");
+        await result.setActive({ session: result.createdSessionId })
+        setOAuthInProgress(false)
+        router.replace(ROUTES.home)
+        return
       }
+
+      setOAuthInProgress(false)
+      Alert.alert(
+        'Google sign-in',
+        "We couldn't finish signing you in. Please try again.",
+      )
     } catch (err) {
+      setOAuthInProgress(false)
       const message = isClerkAPIResponseError(err)
-        ? err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message
-        : "Google sign-in didn't complete.";
-      Alert.alert("Google sign-in failed", message ?? "Unknown error");
+        ? (err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message)
+        : "Google sign-in didn't complete."
+      Alert.alert('Google sign-in failed', message ?? 'Unknown error')
     } finally {
-      setGoogleLoading(false);
+      setGoogleLoading(false)
     }
-  }, [startSSOFlow, googleLoading, router]);
+  }, [startSSOFlow, googleLoading, router])
 
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={["#DCFCE7", "#FFFFFF"]}
+        colors={['#DCFCE7', '#FFFFFF']}
         style={styles.bgGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.6 }}
       />
-      <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
             contentContainerStyle={styles.scroll}
-            keyboardShouldPersistTaps="handled"
+            keyboardShouldPersistTaps='handled'
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.logoWrap}>
               <View style={styles.logoBadge}>
                 <Image
-                  source={require("@/assets/images/logo-glow.png")}
+                  source={require('@/assets/images/logo-leaf-flame.png')}
                   style={styles.logoImg}
-                  resizeMode="contain"
+                  resizeMode='contain'
                 />
               </View>
             </View>
@@ -145,24 +163,24 @@ export default function SignInScreen() {
 
             <View style={styles.form}>
               <AuthInput
-                label="Email"
-                icon="mail-outline"
-                placeholder="you@example.com"
+                label='Email'
+                icon='mail-outline'
+                placeholder='you@example.com'
                 value={email}
                 onChangeText={setEmail}
-                keyboardType="email-address"
-                textContentType="emailAddress"
+                keyboardType='email-address'
+                textContentType='emailAddress'
                 error={emailError}
               />
 
               <AuthInput
-                label="Password"
-                icon="lock-closed-outline"
-                placeholder="Enter your password"
+                label='Password'
+                icon='lock-closed-outline'
+                placeholder='Enter your password'
                 value={password}
                 onChangeText={setPassword}
                 isPassword
-                textContentType="password"
+                textContentType='password'
                 error={passwordError}
               />
 
@@ -171,8 +189,8 @@ export default function SignInScreen() {
                 hitSlop={8}
                 onPress={() =>
                   Alert.alert(
-                    "Reset password",
-                    "Password recovery is coming soon. For now, please contact support.",
+                    'Reset password',
+                    'Password recovery is coming soon. For now, please contact support.',
                   )
                 }
               >
@@ -180,19 +198,19 @@ export default function SignInScreen() {
               </TouchableOpacity>
 
               <PrimaryButton
-                label="Sign In"
+                label='Sign In'
                 onPress={onSignIn}
                 loading={submitting}
                 disabled={!isLoaded}
               />
 
               <View style={{ marginTop: Spacing.xl }}>
-                <Divider label="or continue with" />
+                <Divider label='or continue with' />
               </View>
 
               <View style={{ marginTop: Spacing.lg }}>
                 <GoogleButton
-                  label="Continue with Google"
+                  label='Continue with Google'
                   onPress={onGoogle}
                   loading={googleLoading}
                 />
@@ -201,7 +219,7 @@ export default function SignInScreen() {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Don&apos;t have an account?</Text>
-              <Link href="/(auth)/sign-up" replace asChild>
+              <Link href='/(auth)/sign-up' replace asChild>
                 <TouchableOpacity hitSlop={6}>
                   <Text style={styles.footerLink}>Sign up</Text>
                 </TouchableOpacity>
@@ -211,7 +229,7 @@ export default function SignInScreen() {
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -230,7 +248,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxxl,
   },
   logoWrap: {
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: Spacing.lg,
     marginBottom: Spacing.xl,
   },
@@ -239,9 +257,9 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: Radius.xxl,
     backgroundColor: Colors.white,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#16A34A",
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#16A34A',
     shadowOpacity: 0.25,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
@@ -253,11 +271,11 @@ const styles = StyleSheet.create({
   },
   heading: {
     marginBottom: Spacing.xxxl,
-    alignItems: "center",
+    alignItems: 'center',
   },
   title: {
     fontSize: FontSizes.display,
-    fontWeight: "800",
+    fontWeight: '800',
     color: Colors.text,
     letterSpacing: -0.5,
     marginBottom: Spacing.sm,
@@ -265,7 +283,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: Spacing.lg,
   },
@@ -273,18 +291,18 @@ const styles = StyleSheet.create({
     gap: Spacing.lg,
   },
   forgot: {
-    alignSelf: "flex-end",
+    alignSelf: 'flex-end',
     marginTop: -Spacing.xs,
     marginBottom: Spacing.md,
   },
   forgotText: {
     color: Colors.primaryDark,
-    fontWeight: "600",
+    fontWeight: '600',
     fontSize: FontSizes.sm,
   },
   footer: {
-    flexDirection: "row",
-    justifyContent: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
     gap: Spacing.xs,
     marginTop: Spacing.xxxl,
   },
@@ -294,7 +312,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     color: Colors.primaryDark,
-    fontWeight: "700",
+    fontWeight: '700',
     fontSize: FontSizes.md,
   },
-});
+})

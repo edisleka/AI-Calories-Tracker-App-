@@ -23,6 +23,8 @@ import { PrimaryButton } from "@/components/PrimaryButton";
 import { GoogleButton } from "@/components/SocialButton";
 import { Colors, FontSizes, Radius, Spacing } from "@/constants/theme";
 import { useWarmUpBrowser } from "@/hooks/useWarmUpBrowser";
+import { setOAuthInProgress } from "@/lib/oauth-session";
+import { ROUTES } from "@/lib/routes";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -116,7 +118,7 @@ export default function SignUpScreen() {
 
       if (attempt.status === "complete") {
         await setActive({ session: attempt.createdSessionId });
-        router.replace("/(app)/home");
+        router.replace(ROUTES.home);
       } else {
         Alert.alert(
           "Verification incomplete",
@@ -131,26 +133,30 @@ export default function SignUpScreen() {
     } finally {
       setVerifying(false);
     }
-  }, [isLoaded, code, signUp, setActive, firstName, lastName, email, router]);
+  }, [isLoaded, code, signUp, setActive, router]);
 
   const onGoogle = useCallback(async () => {
     if (googleLoading) return;
+    setOAuthInProgress(true);
     setGoogleLoading(true);
     try {
       const result = await startSSOFlow({ strategy: "oauth_google" });
 
-      if (result.createdSessionId && result.setActive) {
-        await result.setActive({ session: result.createdSessionId });
-        router.replace("/(app)/home");
+      const authType = result.authSessionResult?.type;
+      if (authType === "cancel" || authType === "dismiss") {
+        setOAuthInProgress(false);
         return;
       }
 
-      const authType = result.authSessionResult?.type;
-      if (authType === "cancel" || authType === "dismiss") {
+      if (result.createdSessionId && result.setActive) {
+        await result.setActive({ session: result.createdSessionId });
+        setOAuthInProgress(false);
+        router.replace(ROUTES.home);
         return;
       }
 
       if (result.signUp?.status === "missing_requirements") {
+        setOAuthInProgress(false);
         const missing = result.signUp.missingFields ?? [];
         const detail =
           missing.length > 0
@@ -160,11 +166,13 @@ export default function SignUpScreen() {
         return;
       }
 
+      setOAuthInProgress(false);
       Alert.alert(
         "Google sign-up didn't complete",
         "We couldn't finish signing you up. Please try again.",
       );
     } catch (err) {
+      setOAuthInProgress(false);
       const message = isClerkAPIResponseError(err)
         ? err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message
         : "Google sign-up didn't complete.";
@@ -195,7 +203,7 @@ export default function SignUpScreen() {
             <View style={styles.logoWrap}>
               <View style={styles.logoBadge}>
                 <Image
-                  source={require("@/assets/images/logo-glow.png")}
+                  source={require("@/assets/images/logo-leaf-flame.png")}
                   style={styles.logoImg}
                   resizeMode="contain"
                 />

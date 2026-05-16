@@ -1,14 +1,35 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { Redirect, Stack } from "expo-router";
-import { useEffect } from "react";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect, useRef } from "react";
+import { anonymizeUserId } from "@/lib/anonymize";
+import { ROUTES } from "@/lib/routes";
+import { setSignedInHint } from "@/lib/storage";
 import { upsertUser } from "@/lib/users";
 
 export default function AppLayout() {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
+  const router = useRouter();
+  const segments = useSegments();
+  const lastSyncedUid = useRef<string | null>(null);
+  const shouldRedirectToSignIn =
+    isLoaded && !isSignedIn && segments[0] === "(app)";
 
   useEffect(() => {
-    if (!user) return;
+    if (shouldRedirectToSignIn) {
+      router.replace(ROUTES.signIn);
+    }
+  }, [shouldRedirectToSignIn, router]);
+
+  useEffect(() => {
+    if (shouldRedirectToSignIn || !user) return;
+    if (lastSyncedUid.current === user.id) return;
+    lastSyncedUid.current = user.id;
+
+    setSignedInHint().catch((e) =>
+      console.warn("[storage] setSignedInHint failed:", e),
+    );
+
     upsertUser(
       {
         id: user.id,
@@ -23,15 +44,40 @@ export default function AppLayout() {
           emailAddress: e.emailAddress,
         })),
       },
-      // Best-effort: provider for Google sign-ins, password for email/password.
       user.externalAccounts.some((a) => a.provider === "google")
         ? "google"
         : "password",
-    ).catch((e) => console.warn("[firestore] background upsert failed:", e));
-  }, [user]);
+    )
+      .then((outcome) => {
+        console.log(
+          `[firestore] sync outcome for ${anonymizeUserId(user.id)}: ${outcome}`,
+        );
+      })
+      .catch((err: unknown) => {
+        const code =
+          err && typeof err === "object" && "code" in err
+            ? String((err as { code: unknown }).code)
+            : "";
+        const message =
+          err instanceof Error ? err.message : "unknown error";
 
-  if (!isLoaded) return null;
-  if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />;
+        if (code === "permission-denied") {
+          console.error(
+            `[firestore] PERMISSION DENIED writing users/${anonymizeUserId(user.id)}. ` +
+              "Update your Firestore security rules. See README.",
+          );
+        } else {
+          console.warn(
+            `[firestore] upsert failed (${code || "no-code"}): ${message}`,
+          );
+        }
+        lastSyncedUid.current = null;
+      });
+  }, [user, shouldRedirectToSignIn]);
+
+  if (shouldRedirectToSignIn) {
+    return null;
+  }
 
   return (
     <Stack

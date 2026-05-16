@@ -89,6 +89,44 @@ src/
 - Email verification is required by default on Clerk; the sign-up screen
   handles the 6-digit code in-flow.
 
+## Firestore security rules
+
+The app writes to `users/{uid}` where `uid` is the Clerk user id. Because this
+project uses Clerk (not Firebase Auth) the writes are unauthenticated from
+Firebase's perspective, so during development you need rules that allow the
+write. For quick local development, publish rules that stay open for about
+**30 days** — set the expiry date to roughly one month from today (example below
+uses 2026-06-15; adjust before you publish):
+
+```text
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // LOCAL DEV ONLY — not for production. Update the date when you publish.
+      allow read, write: if request.time < timestamp.date(2026, 6, 15);
+    }
+  }
+}
+```
+
+For production, switch to Clerk-Firebase integration (Custom Token from a
+Clerk JWT template) and tighten the rules:
+
+```text
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
+```
+
+If `[firestore] PERMISSION DENIED` appears in the Metro logs after sign-in,
+the rules above are the fix.
+
 ## Production checklist
 
 - [ ] Configure native Google OAuth credentials in the Clerk dashboard

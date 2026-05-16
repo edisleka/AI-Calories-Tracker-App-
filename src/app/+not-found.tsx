@@ -4,7 +4,11 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Colors } from "@/constants/theme";
 import { ROUTES } from "@/lib/routes";
 
-export default function Index() {
+/**
+ * Catches OAuth callbacks and other unknown deep links, then sends the user
+ * to the right place once Clerk has hydrated.
+ */
+export default function NotFoundScreen() {
   const { isLoaded, isSignedIn } = useAuth();
 
   if (!isLoaded) {
