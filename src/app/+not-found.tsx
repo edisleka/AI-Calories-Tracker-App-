@@ -4,15 +4,15 @@ import { AuthLoadingScreen } from "@/components/AuthLoadingScreen";
 import { ROUTES } from "@/lib/routes";
 
 /**
- * Catches OAuth callbacks and other unknown deep links. Auth routing is handled
- * in the root layout; this only waits for Clerk then enters the auth stack.
+ * Catches OAuth callbacks and other unknown deep links, then sends users to the
+ * correct stack once Clerk has hydrated.
  */
 export default function NotFoundScreen() {
-  const { isLoaded } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
 
   if (!isLoaded) {
     return <AuthLoadingScreen />;
   }
 
-  return <Redirect href={ROUTES.signIn} />;
+  return <Redirect href={isSignedIn ? ROUTES.home : ROUTES.signIn} />;
 }
