@@ -21,12 +21,8 @@ export default function AppLayout() {
     }
   }, [shouldRedirectToSignIn, router]);
 
-  if (shouldRedirectToSignIn) {
-    return null;
-  }
-
   useEffect(() => {
-    if (!user) return;
+    if (shouldRedirectToSignIn || !user) return;
     if (lastSyncedUid.current === user.id) return;
     lastSyncedUid.current = user.id;
 
@@ -77,7 +73,11 @@ export default function AppLayout() {
         }
         lastSyncedUid.current = null;
       });
-  }, [user]);
+  }, [user, shouldRedirectToSignIn]);
+
+  if (shouldRedirectToSignIn) {
+    return null;
+  }
 
   return (
     <Stack
