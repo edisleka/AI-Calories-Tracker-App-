@@ -2,7 +2,7 @@ import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useRef } from "react";
 import { ROUTES } from "@/lib/routes";
-import { saveCachedUser } from "@/lib/storage";
+import { setSignedInHint } from "@/lib/storage";
 import { upsertUser } from "@/lib/users";
 
 export default function AppLayout() {
@@ -24,17 +24,9 @@ export default function AppLayout() {
     if (lastSyncedUid.current === user.id) return;
     lastSyncedUid.current = user.id;
 
-    const email = user.primaryEmailAddress?.emailAddress ?? null;
-
-    saveCachedUser({
-      uid: user.id,
-      email,
-      firstName: user.firstName ?? null,
-      lastName: user.lastName ?? null,
-      fullName: user.fullName ?? null,
-      imageUrl: user.imageUrl ?? null,
-      cachedAt: Date.now(),
-    }).catch((e) => console.warn("[storage] cache failed:", e));
+    setSignedInHint().catch((e) =>
+      console.warn("[storage] setSignedInHint failed:", e),
+    );
 
     upsertUser(
       {

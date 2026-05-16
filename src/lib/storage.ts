@@ -1,44 +1,19 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const USER_KEY = "@aict/user";
 const SIGNED_IN_HINT_KEY = "@aict/isSignedIn";
-
-export type CachedUser = {
-  uid: string;
-  email: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  fullName: string | null;
-  imageUrl: string | null;
-  cachedAt: number;
-};
+/** Legacy key that stored PII in plain text — removed on sign-out and when re-saving hint. */
+const LEGACY_USER_KEY = "@aict/user";
 
 /**
- * Persist the user profile to AsyncStorage so the next cold start can render
- * the home screen instantly while Clerk hydrates its session in the background.
- *
- * Clerk's `tokenCache` (expo-secure-store) is the source of truth for the
- * actual auth session — this is a UX optimization, not an auth bypass.
+ * Non-sensitive session hint only. Profile fields (email, name, avatar) must
+ * come from the Clerk session via `useUser()`, not from local storage.
  */
-export async function saveCachedUser(user: CachedUser): Promise<void> {
+export async function setSignedInHint(): Promise<void> {
   try {
-    await AsyncStorage.multiSet([
-      [USER_KEY, JSON.stringify(user)],
-      [SIGNED_IN_HINT_KEY, "1"],
-    ]);
+    await AsyncStorage.multiRemove([LEGACY_USER_KEY]);
+    await AsyncStorage.setItem(SIGNED_IN_HINT_KEY, "1");
   } catch (e) {
-    console.warn("[storage] saveCachedUser failed:", e);
-  }
-}
-
-export async function getCachedUser(): Promise<CachedUser | null> {
-  try {
-    const raw = await AsyncStorage.getItem(USER_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as CachedUser;
-  } catch (e) {
-    console.warn("[storage] getCachedUser failed:", e);
-    return null;
+    console.warn("[storage] setSignedInHint failed:", e);
   }
 }
 
@@ -51,10 +26,10 @@ export async function getSignedInHint(): Promise<boolean> {
   }
 }
 
-export async function clearCachedUser(): Promise<void> {
+export async function clearSignedInHint(): Promise<void> {
   try {
-    await AsyncStorage.multiRemove([USER_KEY, SIGNED_IN_HINT_KEY]);
+    await AsyncStorage.multiRemove([SIGNED_IN_HINT_KEY, LEGACY_USER_KEY]);
   } catch (e) {
-    console.warn("[storage] clearCachedUser failed:", e);
+    console.warn("[storage] clearSignedInHint failed:", e);
   }
 }

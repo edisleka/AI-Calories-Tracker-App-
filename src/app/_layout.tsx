@@ -31,7 +31,12 @@ function SplashController() {
 
 export default function RootLayout() {
   if (!publishableKey) {
-    return null;
+    void SplashScreen.hideAsync();
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar style="dark" />
+      </GestureHandlerRootView>
+    );
   }
 
   return (

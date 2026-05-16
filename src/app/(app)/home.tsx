@@ -2,7 +2,6 @@ import { isClerkAPIResponseError, useClerk, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -15,37 +14,22 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, FontSizes, Radius, Shadows, Spacing } from "@/constants/theme";
 import { ROUTES } from "@/lib/routes";
-import {
-  clearCachedUser,
-  getCachedUser,
-  type CachedUser,
-} from "@/lib/storage";
+import { clearSignedInHint } from "@/lib/storage";
 
 export default function HomeScreen() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
 
-  const [cached, setCached] = useState<CachedUser | null>(null);
-  useEffect(() => {
-    getCachedUser().then(setCached);
-  }, []);
-
-  // Prefer the live Clerk user; fall back to the AsyncStorage snapshot for
-  // a flash-free cold start before Clerk finishes hydrating.
-  const displayName = user?.firstName ?? cached?.firstName ?? "there";
+  const displayName = user?.firstName ?? "there";
   const displayEmail =
-    user?.primaryEmailAddress?.emailAddress ?? cached?.email ?? "user";
-  const displayAvatar = user?.imageUrl ?? cached?.imageUrl ?? null;
-  const displayInitial = (
-    user?.firstName?.[0] ??
-    cached?.firstName?.[0] ??
-    "U"
-  ).toUpperCase();
+    user?.primaryEmailAddress?.emailAddress ?? "user";
+  const displayAvatar = user?.imageUrl ?? null;
+  const displayInitial = (user?.firstName?.[0] ?? "U").toUpperCase();
 
   const onSignOut = async () => {
     try {
-      await clearCachedUser();
+      await clearSignedInHint();
       await signOut();
       router.replace(ROUTES.signIn);
     } catch (err) {

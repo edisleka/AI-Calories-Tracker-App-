@@ -94,14 +94,17 @@ src/
 The app writes to `users/{uid}` where `uid` is the Clerk user id. Because this
 project uses Clerk (not Firebase Auth) the writes are unauthenticated from
 Firebase's perspective, so during development you need rules that allow the
-write. For quick local development, use **test mode** (open for 30 days):
+write. For quick local development, publish rules that stay open for about
+**30 days** — set the expiry date to roughly one month from today (example below
+uses 2026-06-15; adjust before you publish):
 
 ```text
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2099, 1, 1);
+      // LOCAL DEV ONLY — not for production. Update the date when you publish.
+      allow read, write: if request.time < timestamp.date(2026, 6, 15);
     }
   }
 }
