@@ -23,6 +23,7 @@ import { PrimaryButton } from "@/components/PrimaryButton";
 import { GoogleButton } from "@/components/SocialButton";
 import { Colors, FontSizes, Radius, Spacing } from "@/constants/theme";
 import { useWarmUpBrowser } from "@/hooks/useWarmUpBrowser";
+import { ROUTES } from "@/lib/routes";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -116,7 +117,7 @@ export default function SignUpScreen() {
 
       if (attempt.status === "complete") {
         await setActive({ session: attempt.createdSessionId });
-        router.replace("/(app)/home");
+        router.replace(ROUTES.home);
       } else {
         Alert.alert(
           "Verification incomplete",
@@ -131,7 +132,7 @@ export default function SignUpScreen() {
     } finally {
       setVerifying(false);
     }
-  }, [isLoaded, code, signUp, setActive, firstName, lastName, email, router]);
+  }, [isLoaded, code, signUp, setActive, router]);
 
   const onGoogle = useCallback(async () => {
     if (googleLoading) return;
@@ -141,7 +142,7 @@ export default function SignUpScreen() {
 
       if (result.createdSessionId && result.setActive) {
         await result.setActive({ session: result.createdSessionId });
-        router.replace("/(app)/home");
+        router.replace(ROUTES.home);
         return;
       }
 
@@ -195,7 +196,7 @@ export default function SignUpScreen() {
             <View style={styles.logoWrap}>
               <View style={styles.logoBadge}>
                 <Image
-                  source={require("@/assets/images/logo-glow.png")}
+                  source={require("@/assets/images/logo-leaf-flame.png")}
                   style={styles.logoImg}
                   resizeMode="contain"
                 />

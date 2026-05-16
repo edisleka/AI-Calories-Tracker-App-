@@ -2,6 +2,7 @@ import { isClerkAPIResponseError, useClerk, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -13,16 +14,40 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, FontSizes, Radius, Shadows, Spacing } from "@/constants/theme";
+import { ROUTES } from "@/lib/routes";
+import {
+  clearCachedUser,
+  getCachedUser,
+  type CachedUser,
+} from "@/lib/storage";
 
 export default function HomeScreen() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
 
+  const [cached, setCached] = useState<CachedUser | null>(null);
+  useEffect(() => {
+    getCachedUser().then(setCached);
+  }, []);
+
+  // Prefer the live Clerk user; fall back to the AsyncStorage snapshot for
+  // a flash-free cold start before Clerk finishes hydrating.
+  const displayName = user?.firstName ?? cached?.firstName ?? "there";
+  const displayEmail =
+    user?.primaryEmailAddress?.emailAddress ?? cached?.email ?? "user";
+  const displayAvatar = user?.imageUrl ?? cached?.imageUrl ?? null;
+  const displayInitial = (
+    user?.firstName?.[0] ??
+    cached?.firstName?.[0] ??
+    "U"
+  ).toUpperCase();
+
   const onSignOut = async () => {
     try {
+      await clearCachedUser();
       await signOut();
-      router.replace("/(auth)/sign-in");
+      router.replace(ROUTES.signIn);
     } catch (err) {
       const message = isClerkAPIResponseError(err)
         ? err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message
@@ -41,21 +66,17 @@ export default function HomeScreen() {
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.greeting}>
-                Hi, {user?.firstName ?? "there"} 👋
-              </Text>
+              <Text style={styles.greeting}>Hi, {displayName} 👋</Text>
               <Text style={styles.subGreeting}>
                 Let&apos;s crush today&apos;s goals.
               </Text>
             </View>
             <TouchableOpacity style={styles.avatarWrap} onPress={onSignOut}>
-              {user?.imageUrl ? (
-                <Image source={{ uri: user.imageUrl }} style={styles.avatar} />
+              {displayAvatar ? (
+                <Image source={{ uri: displayAvatar }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, styles.avatarFallback]}>
-                  <Text style={styles.avatarInitial}>
-                    {(user?.firstName?.[0] ?? "U").toUpperCase()}
-                  </Text>
+                  <Text style={styles.avatarInitial}>{displayInitial}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -96,7 +117,7 @@ export default function HomeScreen() {
               color={Colors.success}
             />
             <Text style={styles.signedInText}>
-              Signed in as {user?.primaryEmailAddress?.emailAddress ?? "user"}
+              Signed in as {displayEmail}
             </Text>
           </View>
 

@@ -36,6 +36,8 @@ function pickEmail(user: ClerkUserLike): string | null {
   return null;
 }
 
+export type UpsertOutcome = "created" | "updated" | "skipped";
+
 /**
  * Persists a user to Firestore (collection `users`, doc id = Clerk user id).
  * Creates the doc with `createdAt` on first sign-in/up, and always refreshes
@@ -44,14 +46,19 @@ function pickEmail(user: ClerkUserLike): string | null {
 export async function upsertUser(
   user: ClerkUserLike,
   provider: AuthProvider,
-): Promise<void> {
+): Promise<UpsertOutcome> {
   if (!process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID) {
-    console.warn("[users] Firebase project id missing; skipping Firestore upsert.");
-    return;
+    console.warn(
+      "[firestore] Firebase project id missing; skipping Firestore upsert.",
+    );
+    return "skipped";
   }
 
   const db = getDb();
   const ref = doc(db, "users", user.id);
+
+  console.log(`[firestore] upsert users/${user.id} (provider=${provider})`);
+
   const snapshot = await getDoc(ref);
 
   const email = pickEmail(user);
@@ -74,7 +81,11 @@ export async function upsertUser(
 
   if (snapshot.exists()) {
     await setDoc(ref, base, { merge: true });
-  } else {
-    await setDoc(ref, { ...base, createdAt: serverTimestamp() });
+    console.log(`[firestore] users/${user.id} updated`);
+    return "updated";
   }
+
+  await setDoc(ref, { ...base, createdAt: serverTimestamp() });
+  console.log(`[firestore] users/${user.id} created`);
+  return "created";
 }
