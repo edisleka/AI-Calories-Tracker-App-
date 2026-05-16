@@ -1,30 +1,11 @@
-import { useAuth } from "@clerk/clerk-expo";
-import { Redirect, Stack, useRouter } from "expo-router";
-import { useEffect } from "react";
+import { Stack } from "expo-router";
 import { AuthLoadingScreen } from "@/components/AuthLoadingScreen";
-import { isOAuthInProgress, setOAuthInProgress } from "@/lib/oauth-session";
-import { ROUTES } from "@/lib/routes";
+import { useOAuthInProgress } from "@/lib/oauth-session";
 
 export default function AuthLayout() {
-  const { isLoaded, isSignedIn } = useAuth();
-  const router = useRouter();
+  const oauthInProgress = useOAuthInProgress();
 
-  useEffect(() => {
-    if (!isSignedIn) return;
-    setOAuthInProgress(false);
-    router.replace(ROUTES.home);
-  }, [isSignedIn, router]);
-
-  if (!isLoaded) {
-    return <AuthLoadingScreen />;
-  }
-
-  // Signed-in users must leave auth immediately (even if oauth flag is still set).
-  if (isSignedIn) {
-    return <Redirect href={ROUTES.home} />;
-  }
-
-  if (isOAuthInProgress()) {
+  if (oauthInProgress) {
     return <AuthLoadingScreen />;
   }
 

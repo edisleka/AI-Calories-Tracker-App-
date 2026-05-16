@@ -1,28 +1,16 @@
-import { useAuth, useUser } from "@clerk/clerk-expo";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { useUser } from "@clerk/clerk-expo";
+import { Stack } from "expo-router";
 import { useEffect, useRef } from "react";
 import { anonymizeUserId } from "@/lib/anonymize";
-import { ROUTES } from "@/lib/routes";
 import { setSignedInHint } from "@/lib/storage";
 import { upsertUser } from "@/lib/users";
 
 export default function AppLayout() {
-  const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
-  const router = useRouter();
-  const segments = useSegments();
   const lastSyncedUid = useRef<string | null>(null);
-  const shouldRedirectToSignIn =
-    isLoaded && !isSignedIn && segments[0] === "(app)";
 
   useEffect(() => {
-    if (shouldRedirectToSignIn) {
-      router.replace(ROUTES.signIn);
-    }
-  }, [shouldRedirectToSignIn, router]);
-
-  useEffect(() => {
-    if (shouldRedirectToSignIn || !user) return;
+    if (!user) return;
     if (lastSyncedUid.current === user.id) return;
     lastSyncedUid.current = user.id;
 
@@ -73,11 +61,7 @@ export default function AppLayout() {
         }
         lastSyncedUid.current = null;
       });
-  }, [user, shouldRedirectToSignIn]);
-
-  if (shouldRedirectToSignIn) {
-    return null;
-  }
+  }, [user]);
 
   return (
     <Stack
