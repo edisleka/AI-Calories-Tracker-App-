@@ -3,6 +3,7 @@ import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SplashController } from "@/components/SplashController";
 
@@ -18,8 +19,13 @@ if (!publishableKey) {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    if (!publishableKey) {
+      void SplashScreen.hideAsync();
+    }
+  }, []);
+
   if (!publishableKey) {
-    void SplashScreen.hideAsync();
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style="dark" />

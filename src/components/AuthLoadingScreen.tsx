@@ -4,7 +4,14 @@ import { Colors } from "@/constants/theme";
 export function AuthLoadingScreen() {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={Colors.primary} />
+      <ActivityIndicator
+        size="large"
+        color={Colors.primary}
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel="Loading"
+        accessibilityState={{ busy: true }}
+      />
     </View>
   );
 }
