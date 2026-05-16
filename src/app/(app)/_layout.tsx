@@ -1,6 +1,7 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useRef } from "react";
+import { anonymizeUserId } from "@/lib/anonymize";
 import { ROUTES } from "@/lib/routes";
 import { setSignedInHint } from "@/lib/storage";
 import { upsertUser } from "@/lib/users";
@@ -11,13 +12,18 @@ export default function AppLayout() {
   const router = useRouter();
   const segments = useSegments();
   const lastSyncedUid = useRef<string | null>(null);
+  const shouldRedirectToSignIn =
+    isLoaded && !isSignedIn && segments[0] === "(app)";
 
   useEffect(() => {
-    if (!isLoaded || isSignedIn) return;
-    if (segments[0] === "(app)") {
+    if (shouldRedirectToSignIn) {
       router.replace(ROUTES.signIn);
     }
-  }, [isLoaded, isSignedIn, segments, router]);
+  }, [shouldRedirectToSignIn, router]);
+
+  if (shouldRedirectToSignIn) {
+    return null;
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -47,7 +53,9 @@ export default function AppLayout() {
         : "password",
     )
       .then((outcome) => {
-        console.log(`[firestore] sync outcome for ${user.id}: ${outcome}`);
+        console.log(
+          `[firestore] sync outcome for ${anonymizeUserId(user.id)}: ${outcome}`,
+        );
       })
       .catch((err: unknown) => {
         const code =
@@ -59,9 +67,8 @@ export default function AppLayout() {
 
         if (code === "permission-denied") {
           console.error(
-            "[firestore] PERMISSION DENIED writing users/" +
-              user.id +
-              ". Update your Firestore security rules. See README.",
+            `[firestore] PERMISSION DENIED writing users/${anonymizeUserId(user.id)}. ` +
+              "Update your Firestore security rules. See README.",
           );
         } else {
           console.warn(

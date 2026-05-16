@@ -29,8 +29,8 @@ export default function HomeScreen() {
 
   const onSignOut = async () => {
     try {
-      await clearSignedInHint();
       await signOut();
+      await clearSignedInHint();
       router.replace(ROUTES.signIn);
     } catch (err) {
       const message = isClerkAPIResponseError(err)
