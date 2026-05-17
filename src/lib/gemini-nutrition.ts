@@ -85,17 +85,26 @@ export async function generateNutritionPlanWithGemini(
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: buildPrompt(profile) }] }],
-      generationConfig: {
-        temperature: 0.4,
-        responseMimeType: 'application/json',
-      },
-    }),
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 20_000)
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: buildPrompt(profile) }] }],
+        generationConfig: {
+          temperature: 0.4,
+          responseMimeType: 'application/json',
+        },
+      }),
+    })
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!response.ok) {
     const errText = await response.text()

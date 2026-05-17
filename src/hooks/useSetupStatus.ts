@@ -42,6 +42,13 @@ export function useSetupStatus(uid: string | undefined): SetupStatus {
           setNutritionPlan(resolvedPlan);
         }
       })
+      .catch((err) => {
+        console.warn("[useSetupStatus] failed to load setup state:", err);
+        if (!cancelled) {
+          setProfile(null);
+          setNutritionPlan(null);
+        }
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });

@@ -176,11 +176,15 @@ export default function OnboardingScreen() {
     }
 
     setSaving(true);
-    router.push({
-      pathname: ROUTES.generatePlan,
-      params: { profileJson: JSON.stringify(profile) },
-    } as Href);
-    setSaving(false);
+    try {
+      router.push({
+        pathname: ROUTES.generatePlan,
+        params: { profileJson: JSON.stringify(profile) },
+      } as Href);
+    } catch {
+      setSaving(false);
+      Alert.alert("Navigation failed", "Please try again.");
+    }
   };
 
   return (

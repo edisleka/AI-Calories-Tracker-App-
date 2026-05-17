@@ -27,22 +27,17 @@ export default function AppLayout() {
   useEffect(() => {
     if (!user || setupLoading) return;
 
-    if (!profileComplete && !onOnboarding && !onGeneratePlan) {
+    if (!profileComplete && !onOnboarding) {
       router.replace(ROUTES.onboarding as Href);
       return;
     }
 
-    if (
-      profileComplete &&
-      !nutritionPlanComplete &&
-      !onOnboarding &&
-      !onGeneratePlan
-    ) {
+    if (profileComplete && !nutritionPlanComplete && !onGeneratePlan) {
       router.replace(ROUTES.generatePlan as Href);
       return;
     }
 
-    if (setupComplete && onOnboarding) {
+    if (setupComplete && (onOnboarding || onGeneratePlan)) {
       router.replace(ROUTES.home);
     }
   }, [
