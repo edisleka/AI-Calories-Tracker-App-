@@ -180,25 +180,41 @@ export default function OnboardingScreen() {
 
     setSaving(true);
     try {
-      await saveUserProfileToDb(user.id, profile);
-      await saveLocalProfile(user.id, profile);
-      markProfileCompleted(user.id);
-      router.replace(ROUTES.home as Href);
-    } catch {
       try {
-        await saveLocalProfile(user.id, profile);
+        await saveUserProfileToDb(user.id, profile);
+      } catch (cloudErr) {
+        console.warn("[onboarding] cloud save failed:", cloudErr);
+        try {
+          await saveLocalProfile(user.id, profile);
+        } catch (localErr) {
+          console.warn("[onboarding] local save failed:", localErr);
+          Alert.alert(
+            "Could not save profile",
+            "We could not save your profile to the cloud or this device. Please try again.",
+          );
+          return;
+        }
+
         markProfileCompleted(user.id);
         Alert.alert(
           "Cloud sync failed",
           "Saved on this device. We could not sync to the cloud right now.",
         );
         router.replace(ROUTES.home as Href);
-      } catch {
-        Alert.alert(
-          "Could not save profile",
-          "Please try again. Your profile was not saved.",
+        return;
+      }
+
+      try {
+        await saveLocalProfile(user.id, profile);
+      } catch (localErr) {
+        console.warn(
+          "[onboarding] local cache failed after cloud save:",
+          localErr,
         );
       }
+
+      markProfileCompleted(user.id);
+      router.replace(ROUTES.home as Href);
     } finally {
       setSaving(false);
     }
