@@ -8,7 +8,7 @@ import { setOAuthInProgress } from '@/lib/oauth-session'
 import { ROUTES } from '@/lib/routes'
 import { isClerkAPIResponseError, useSignIn, useSSO } from '@clerk/clerk-expo'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Link, useRouter } from 'expo-router'
+import { type Href, Link, useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import { useCallback, useState } from 'react'
 import {
@@ -73,7 +73,7 @@ export default function SignInScreen() {
 
       if (attempt.status === 'complete') {
         await setActive({ session: attempt.createdSessionId })
-        router.replace(ROUTES.home)
+        router.replace(ROUTES.home as Href)
       } else {
         Alert.alert(
           'Almost there',
@@ -106,7 +106,7 @@ export default function SignInScreen() {
       if (result.createdSessionId && result.setActive) {
         await result.setActive({ session: result.createdSessionId })
         setOAuthInProgress(false)
-        router.replace(ROUTES.home)
+        router.replace(ROUTES.home as Href)
         return
       }
 

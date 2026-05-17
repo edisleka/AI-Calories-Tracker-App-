@@ -1,9 +1,8 @@
-import { isClerkAPIResponseError, useClerk, useUser } from "@clerk/clerk-expo";
+import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 import {
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -12,35 +11,19 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSetupStatus } from "@/hooks/useSetupStatus";
 import { Colors, FontSizes, Radius, Shadows, Spacing } from "@/constants/theme";
 import { ROUTES } from "@/lib/routes";
-import { resetProfileStatusSession } from "@/lib/profile-status";
-import { clearAllLocalAppData } from "@/lib/storage";
 
 export default function HomeScreen() {
   const { user } = useUser();
-  const { signOut } = useClerk();
   const router = useRouter();
+  const { nutritionPlan } = useSetupStatus(user?.id);
 
   const displayName = user?.firstName ?? "there";
-  const displayEmail =
-    user?.primaryEmailAddress?.emailAddress ?? "user";
   const displayAvatar = user?.imageUrl ?? null;
   const displayInitial = (user?.firstName?.[0] ?? "U").toUpperCase();
-
-  const onSignOut = async () => {
-    try {
-      await clearAllLocalAppData();
-      resetProfileStatusSession();
-      await signOut();
-      router.replace(ROUTES.signIn);
-    } catch (err) {
-      const message = isClerkAPIResponseError(err)
-        ? err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message
-        : "Sign out failed. Please try again.";
-      Alert.alert("Sign out failed", message ?? "Unknown error");
-    }
-  };
+  const calorieGoal = nutritionPlan?.dailyCalories ?? 2000;
 
   return (
     <View style={styles.root}>
@@ -48,7 +31,7 @@ export default function HomeScreen() {
         colors={["#DCFCE7", "#FFFFFF"]}
         style={styles.bgGradient}
       />
-      <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.header}>
             <View>
@@ -57,7 +40,12 @@ export default function HomeScreen() {
                 Let&apos;s crush today&apos;s goals.
               </Text>
             </View>
-            <TouchableOpacity style={styles.avatarWrap} onPress={onSignOut}>
+            <TouchableOpacity
+              style={styles.avatarWrap}
+              onPress={() => router.push(ROUTES.profile as Href)}
+              accessibilityRole="button"
+              accessibilityLabel="Open profile"
+            >
               {displayAvatar ? (
                 <Image source={{ uri: displayAvatar }} style={styles.avatar} />
               ) : (
@@ -85,7 +73,9 @@ export default function HomeScreen() {
             <View style={styles.heroProgress}>
               <View style={styles.heroProgressFill} />
             </View>
-            <Text style={styles.heroFooter}>0 / 2,000 kcal goal</Text>
+            <Text style={styles.heroFooter}>
+              0 / {calorieGoal.toLocaleString()} kcal goal
+            </Text>
           </LinearGradient>
 
           <Text style={styles.sectionTitle}>Quick actions</Text>
@@ -95,22 +85,6 @@ export default function HomeScreen() {
             <QuickAction icon="sparkles-outline" label="Ask AI" />
             <QuickAction icon="add-circle-outline" label="Log food" />
           </View>
-
-          <View style={styles.signedInBanner}>
-            <Ionicons
-              name="checkmark-circle"
-              size={20}
-              color={Colors.success}
-            />
-            <Text style={styles.signedInText}>
-              Signed in as {displayEmail}
-            </Text>
-          </View>
-
-          <TouchableOpacity style={styles.signOutBtn} onPress={onSignOut}>
-            <Ionicons name="log-out-outline" size={18} color={Colors.danger} />
-            <Text style={styles.signOutText}>Sign out</Text>
-          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -143,6 +117,7 @@ const styles = StyleSheet.create({
   scroll: {
     padding: Spacing.xxl,
     gap: Spacing.xxl,
+    paddingBottom: Spacing.huge,
   },
   header: {
     flexDirection: "row",
@@ -267,35 +242,5 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     fontWeight: "600",
     color: Colors.text,
-  },
-  signedInBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    backgroundColor: "#ECFDF5",
-    borderColor: "#A7F3D0",
-    borderWidth: 1,
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-  },
-  signedInText: {
-    color: Colors.textSecondary,
-    fontSize: FontSizes.sm,
-    fontWeight: "600",
-    flex: 1,
-  },
-  signOutBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.sm,
-    paddingVertical: Spacing.lg,
-    borderRadius: Radius.xl,
-    backgroundColor: Colors.dangerSoft,
-  },
-  signOutText: {
-    color: Colors.danger,
-    fontWeight: "700",
-    fontSize: FontSizes.md,
   },
 });

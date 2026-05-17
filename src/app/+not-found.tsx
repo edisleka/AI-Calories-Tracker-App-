@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { Redirect } from "expo-router";
+import { type Href, Redirect } from "expo-router";
 import { AuthLoadingScreen } from "@/components/AuthLoadingScreen";
 import { ROUTES } from "@/lib/routes";
 
@@ -14,5 +14,7 @@ export default function NotFoundScreen() {
     return <AuthLoadingScreen />;
   }
 
-  return <Redirect href={isSignedIn ? ROUTES.home : ROUTES.signIn} />;
+  return (
+    <Redirect href={(isSignedIn ? ROUTES.home : ROUTES.signIn) as Href} />
+  );
 }
