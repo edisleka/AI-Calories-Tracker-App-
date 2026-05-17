@@ -2,7 +2,7 @@ import { useUser } from "@clerk/clerk-expo";
 import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useRef } from "react";
 import { AuthLoadingScreen } from "@/components/AuthLoadingScreen";
-import { useProfileStatus } from "@/hooks/useProfileStatus";
+import { useSetupStatus } from "@/hooks/useSetupStatus";
 import { anonymizeUserId } from "@/lib/anonymize";
 import { ROUTES } from "@/lib/routes";
 import { setSignedInHint } from "@/lib/storage";
@@ -13,23 +13,48 @@ export default function AppLayout() {
   const router = useRouter();
   const segments = useSegments();
   const lastSyncedUid = useRef<string | null>(null);
-  const { loading: profileLoading, isComplete: profileComplete } =
-    useProfileStatus(user?.id);
+  const {
+    loading: setupLoading,
+    profileComplete,
+    nutritionPlanComplete,
+    setupComplete,
+  } = useSetupStatus(user?.id);
 
-  const onOnboarding = (segments as string[]).includes("onboarding");
+  const segmentList = segments as string[];
+  const onOnboarding = segmentList.includes("onboarding");
+  const onGeneratePlan = segmentList.includes("generate-plan");
 
   useEffect(() => {
-    if (!user || profileLoading) return;
+    if (!user || setupLoading) return;
 
-    if (!profileComplete && !onOnboarding) {
+    if (!profileComplete && !onOnboarding && !onGeneratePlan) {
       router.replace(ROUTES.onboarding as Href);
       return;
     }
 
-    if (profileComplete && onOnboarding) {
+    if (
+      profileComplete &&
+      !nutritionPlanComplete &&
+      !onOnboarding &&
+      !onGeneratePlan
+    ) {
+      router.replace(ROUTES.generatePlan as Href);
+      return;
+    }
+
+    if (setupComplete && onOnboarding) {
       router.replace(ROUTES.home);
     }
-  }, [user, profileLoading, profileComplete, onOnboarding, router]);
+  }, [
+    user,
+    setupLoading,
+    profileComplete,
+    nutritionPlanComplete,
+    setupComplete,
+    onOnboarding,
+    onGeneratePlan,
+    router,
+  ]);
 
   useEffect(() => {
     if (!user) return;
@@ -85,7 +110,7 @@ export default function AppLayout() {
       });
   }, [user]);
 
-  if (user && profileLoading) {
+  if (user && setupLoading) {
     return <AuthLoadingScreen />;
   }
 

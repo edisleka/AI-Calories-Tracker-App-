@@ -22,3 +22,7 @@ export function consumeProfileCompleted(uid: string): boolean {
   profileJustCompletedUid = null;
   return true;
 }
+
+export function resetProfileStatusSession(): void {
+  profileJustCompletedUid = null;
+}

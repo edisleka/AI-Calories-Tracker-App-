@@ -14,8 +14,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, FontSizes, Radius, Shadows, Spacing } from "@/constants/theme";
 import { ROUTES } from "@/lib/routes";
-import { clearLocalProfile } from "@/lib/profile-storage";
-import { clearSignedInHint } from "@/lib/storage";
+import { resetProfileStatusSession } from "@/lib/profile-status";
+import { clearAllLocalAppData } from "@/lib/storage";
 
 export default function HomeScreen() {
   const { user } = useUser();
@@ -30,10 +30,9 @@ export default function HomeScreen() {
 
   const onSignOut = async () => {
     try {
-      const uid = user?.id;
+      await clearAllLocalAppData();
+      resetProfileStatusSession();
       await signOut();
-      if (uid) await clearLocalProfile(uid);
-      await clearSignedInHint();
       router.replace(ROUTES.signIn);
     } catch (err) {
       const message = isClerkAPIResponseError(err)
