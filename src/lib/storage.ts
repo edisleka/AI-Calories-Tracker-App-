@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const AICT_PREFIX = "@aict/";
 const SIGNED_IN_HINT_KEY = "@aict/isSignedIn";
 /** Legacy key that stored PII in plain text — removed on sign-out and when re-saving hint. */
 const LEGACY_USER_KEY = "@aict/user";
@@ -31,5 +32,18 @@ export async function clearSignedInHint(): Promise<void> {
     await AsyncStorage.multiRemove([SIGNED_IN_HINT_KEY, LEGACY_USER_KEY]);
   } catch (e) {
     console.warn("[storage] clearSignedInHint failed:", e);
+  }
+}
+
+/** Removes every AsyncStorage key written by this app (profiles, session hint, legacy). */
+export async function clearAllLocalAppData(): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const aictKeys = keys.filter((key) => key.startsWith(AICT_PREFIX));
+    if (aictKeys.length > 0) {
+      await AsyncStorage.multiRemove(aictKeys);
+    }
+  } catch (e) {
+    console.warn("[storage] clearAllLocalAppData failed:", e);
   }
 }
