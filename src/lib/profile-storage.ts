@@ -23,9 +23,5 @@ export async function saveLocalProfile(
   uid: string,
   profile: UserProfile,
 ): Promise<void> {
-  try {
-    await AsyncStorage.setItem(profileKey(uid), JSON.stringify(profile));
-  } catch (e) {
-    console.warn("[storage] saveLocalProfile failed:", e);
-  }
+  await AsyncStorage.setItem(profileKey(uid), JSON.stringify(profile));
 }

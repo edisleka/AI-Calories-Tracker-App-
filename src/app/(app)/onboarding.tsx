@@ -34,6 +34,7 @@ import { OnboardingOptionCard } from "@/components/onboarding/OnboardingOptionCa
 import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Colors, FontSizes, Radius, Spacing } from "@/constants/theme";
+import { markProfileCompleted } from "@/lib/profile-status";
 import { saveLocalProfile } from "@/lib/profile-storage";
 import { ROUTES } from "@/lib/routes";
 import { saveUserProfileToDb } from "@/lib/user-profile";
@@ -181,10 +182,12 @@ export default function OnboardingScreen() {
     try {
       await saveUserProfileToDb(user.id, profile);
       await saveLocalProfile(user.id, profile);
+      markProfileCompleted(user.id);
       router.replace(ROUTES.home as Href);
     } catch {
       try {
         await saveLocalProfile(user.id, profile);
+        markProfileCompleted(user.id);
         Alert.alert(
           "Cloud sync failed",
           "Saved on this device. We could not sync to the cloud right now.",
