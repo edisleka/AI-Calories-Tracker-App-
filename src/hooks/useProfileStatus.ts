@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  consumeProfileCompleted,
+  subscribeProfileStatus,
+} from "@/lib/profile-status";
 import { resolveUserProfile } from "@/lib/user-profile";
 
 type ProfileStatus = {
@@ -36,6 +40,19 @@ export function useProfileStatus(uid: string | undefined): ProfileStatus {
       cancelled = true;
     };
   }, [uid, tick]);
+
+  useEffect(
+    () =>
+      subscribeProfileStatus(() => {
+        if (uid && consumeProfileCompleted(uid)) {
+          setIsComplete(true);
+          setLoading(false);
+          return;
+        }
+        setTick((n) => n + 1);
+      }),
+    [uid],
+  );
 
   return {
     loading,
