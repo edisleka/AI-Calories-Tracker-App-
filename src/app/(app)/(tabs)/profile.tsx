@@ -32,9 +32,9 @@ export default function ProfileScreen() {
 
   const onSignOut = async () => {
     try {
+      await signOut();
       await clearAllLocalAppData();
       resetProfileStatusSession();
-      await signOut();
       router.replace(ROUTES.signIn);
     } catch (err) {
       const message = isClerkAPIResponseError(err)
