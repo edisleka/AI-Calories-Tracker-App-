@@ -2,7 +2,11 @@ import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import type { UserProfile } from "@/types/user-profile";
 import { isProfileComplete } from "@/types/user-profile";
 import { getDb } from "./firebase";
-import { getLocalProfile, saveLocalProfile } from "./profile-storage";
+import {
+  clearLocalProfile,
+  getLocalProfile,
+  saveLocalProfile,
+} from "./profile-storage";
 
 function parseProfile(data: Record<string, unknown>): UserProfile | null {
   const profile: UserProfile = {
@@ -53,15 +57,35 @@ export async function saveUserProfileToDb(
   );
 }
 
+/** Loads profile from Firestore first; local cache only when the remote request fails. */
 export async function resolveUserProfile(
   uid: string,
 ): Promise<UserProfile | null> {
-  const local = await getLocalProfile(uid);
-  if (local) return local;
-
-  const remote = await getUserProfileFromDb(uid);
-  if (remote) {
-    await saveLocalProfile(uid, remote);
+  if (!process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID) {
+    return getLocalProfile(uid);
   }
-  return remote;
+
+  try {
+    const snapshot = await getDoc(doc(getDb(), "users", uid));
+    if (!snapshot.exists()) {
+      await clearLocalProfile(uid);
+      return null;
+    }
+
+    const profile = parseProfile(snapshot.data());
+    if (profile) {
+      try {
+        await saveLocalProfile(uid, profile);
+      } catch (e) {
+        console.warn("[profile] failed to cache remote profile:", e);
+      }
+      return profile;
+    }
+
+    await clearLocalProfile(uid);
+    return null;
+  } catch (e) {
+    console.warn("[firestore] resolveUserProfile remote failed:", e);
+    return getLocalProfile(uid);
+  }
 }

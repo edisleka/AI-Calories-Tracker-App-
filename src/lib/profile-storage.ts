@@ -25,3 +25,11 @@ export async function saveLocalProfile(
 ): Promise<void> {
   await AsyncStorage.setItem(profileKey(uid), JSON.stringify(profile));
 }
+
+export async function clearLocalProfile(uid: string): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(profileKey(uid));
+  } catch (e) {
+    console.warn("[profile] clearLocalProfile failed:", e);
+  }
+}

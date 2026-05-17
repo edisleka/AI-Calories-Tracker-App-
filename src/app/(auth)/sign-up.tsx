@@ -92,6 +92,27 @@ export default function SignUpScreen() {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
     } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        const first = err.errors?.[0];
+        if (
+          first?.code === "form_identifier_exists" ||
+          first?.code === "identification_exists"
+        ) {
+          Alert.alert(
+            "Account already exists",
+            "This email is already registered with Clerk. Sign in to continue, or delete the user in the Clerk dashboard to register again.",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Sign in",
+                onPress: () => router.replace(ROUTES.signIn),
+              },
+            ],
+          );
+          return;
+        }
+      }
+
       const message = isClerkAPIResponseError(err)
         ? err.errors?.[0]?.longMessage ?? err.errors?.[0]?.message
         : "Something went wrong. Please try again.";
@@ -99,7 +120,7 @@ export default function SignUpScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [isLoaded, firstName, lastName, email, password, signUp]);
+  }, [isLoaded, firstName, lastName, email, password, signUp, router]);
 
   const onVerify = useCallback(async () => {
     if (!isLoaded) return;
