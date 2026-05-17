@@ -38,7 +38,7 @@ export default function AppLayout() {
     }
 
     if (setupComplete && (onOnboarding || onGeneratePlan)) {
-      router.replace(ROUTES.home);
+      router.replace(ROUTES.home as Href);
     }
   }, [
     user,

@@ -34,6 +34,18 @@ export const Colors = {
   gradientEnd: "#84CC16",
 } as const;
 
+/** Native tab bar (iOS liquid glass + Android Material). */
+export const TabBarColors = {
+  active: Colors.primaryDark,
+  inactive: Colors.textMuted,
+  labelActive: Colors.primaryDark,
+  labelInactive: Colors.textSecondary,
+  background: "rgba(255, 255, 255, 0.88)",
+  indicator: Colors.primarySoft,
+  ripple: "rgba(34, 197, 94, 0.18)",
+  shadow: "rgba(15, 23, 42, 0.08)",
+} as const;
+
 export const Spacing = {
   xs: 4,
   sm: 8,
