@@ -94,13 +94,10 @@ export default function SignUpScreen() {
     } catch (err) {
       if (isClerkAPIResponseError(err)) {
         const first = err.errors?.[0];
-        if (
-          first?.code === "form_identifier_exists" ||
-          first?.code === "identification_exists"
-        ) {
+        if (first?.code === "form_identifier_exists") {
           Alert.alert(
             "Account already exists",
-            "This email is already registered with Clerk. Sign in to continue, or delete the user in the Clerk dashboard to register again.",
+            "This email is already registered. Please sign in to continue. If you forgot your password, use Forgot password on the sign-in screen. Contact support if you still need help.",
             [
               { text: "Cancel", style: "cancel" },
               {
