@@ -7,7 +7,8 @@ type Props = {
 };
 
 export function OnboardingProgress({ step, total }: Props) {
-  const progress = (step + 1) / total;
+  const safeTotal = Math.max(total, 1);
+  const progress = Math.min(1, Math.max(0, (step + 1) / safeTotal));
 
   return (
     <View style={styles.wrap}>

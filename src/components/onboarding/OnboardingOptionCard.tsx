@@ -23,6 +23,11 @@ export function OnboardingOptionCard({
 }: Props) {
   return (
     <TouchableOpacity
+      accessible
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected }}
+      accessibilityLabel={label}
+      accessibilityHint={description}
       activeOpacity={0.85}
       onPress={onPress}
       style={[styles.card, selected && styles.cardSelected]}

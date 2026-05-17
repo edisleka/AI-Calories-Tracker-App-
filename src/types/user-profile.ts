@@ -17,24 +17,46 @@ export type UserProfile = {
 
 export type UserProfileDraft = Partial<UserProfile>;
 
+const VALID_GENDERS = new Set<Gender>([
+  "male",
+  "female",
+  "other",
+  "prefer_not_to_say",
+]);
+const VALID_GOALS = new Set<FitnessGoal>(["gain", "lose", "maintain"]);
+const VALID_FREQUENCIES = new Set<WorkoutFrequency>(["2-3", "3-4", "5-6"]);
+
+export function isValidBirthDate(
+  day: number | undefined,
+  month: number | undefined,
+  year: number | undefined,
+): boolean {
+  if (day == null || month == null || year == null) return false;
+  if (month < 1 || month > 12 || year < 1900 || year > new Date().getFullYear()) {
+    return false;
+  }
+
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+}
+
 export function isProfileComplete(
   profile: UserProfileDraft | null | undefined,
 ): boolean {
   if (!profile) return false;
 
-  const year = profile.birthYear ?? 0;
-  const currentYear = new Date().getFullYear();
-
   return (
     profile.gender != null &&
+    VALID_GENDERS.has(profile.gender) &&
     profile.goal != null &&
+    VALID_GOALS.has(profile.goal) &&
     profile.workoutFrequency != null &&
-    (profile.birthDay ?? 0) >= 1 &&
-    (profile.birthDay ?? 0) <= 31 &&
-    (profile.birthMonth ?? 0) >= 1 &&
-    (profile.birthMonth ?? 0) <= 12 &&
-    year >= 1900 &&
-    year <= currentYear &&
+    VALID_FREQUENCIES.has(profile.workoutFrequency) &&
+    isValidBirthDate(profile.birthDay, profile.birthMonth, profile.birthYear) &&
     (profile.weightKg ?? 0) > 0 &&
     (profile.weightKg ?? 0) < 500 &&
     (profile.heightCm ?? 0) > 0 &&

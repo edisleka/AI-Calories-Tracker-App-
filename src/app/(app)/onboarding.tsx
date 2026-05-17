@@ -44,7 +44,7 @@ import type {
   UserProfileDraft,
   WorkoutFrequency,
 } from "@/types/user-profile";
-import { isProfileComplete } from "@/types/user-profile";
+import { isProfileComplete, isValidBirthDate } from "@/types/user-profile";
 
 const TOTAL_STEPS = 5;
 
@@ -125,10 +125,10 @@ export default function OnboardingScreen() {
       case 2:
         return draft.workoutFrequency != null;
       case 3:
-        return (
-          (draft.birthDay ?? 0) >= 1 &&
-          (draft.birthMonth ?? 0) >= 1 &&
-          (draft.birthYear ?? 0) >= 1900
+        return isValidBirthDate(
+          draft.birthDay,
+          draft.birthMonth,
+          draft.birthYear,
         );
       case 4: {
         const weight = parseFloat(weightText.replace(",", "."));
@@ -183,12 +183,19 @@ export default function OnboardingScreen() {
       await saveLocalProfile(user.id, profile);
       router.replace(ROUTES.home as Href);
     } catch {
-      Alert.alert(
-        "Could not save",
-        "We saved locally but could not sync to the cloud. Check your connection and try again.",
-      );
-      await saveLocalProfile(user.id, profile);
-      router.replace(ROUTES.home as Href);
+      try {
+        await saveLocalProfile(user.id, profile);
+        Alert.alert(
+          "Cloud sync failed",
+          "Saved on this device. We could not sync to the cloud right now.",
+        );
+        router.replace(ROUTES.home as Href);
+      } catch {
+        Alert.alert(
+          "Could not save profile",
+          "Please try again. Your profile was not saved.",
+        );
+      }
     } finally {
       setSaving(false);
     }

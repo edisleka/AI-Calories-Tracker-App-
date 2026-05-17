@@ -24,6 +24,9 @@ export function DateColumnPicker({ label, value, options, onChange }: Props) {
                 key={`${label}-${option.value}`}
                 onPress={() => onChange(option.value)}
                 style={[styles.item, selected && styles.itemSelected]}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`${label} ${option.label}${selected ? ", selected" : ""}`}
               >
                 <Text style={[styles.itemText, selected && styles.itemTextSelected]}>
                   {option.label}
