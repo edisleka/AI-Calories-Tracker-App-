@@ -27,10 +27,7 @@ function RootNavigator() {
   }
 
   return (
-    <Stack
-      screenOptions={{ headerShown: false }}
-      initialRouteName={isSignedIn ? "(app)" : "(auth)"}
-    >
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>

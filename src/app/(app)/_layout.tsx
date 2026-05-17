@@ -1,13 +1,35 @@
 import { useUser } from "@clerk/clerk-expo";
-import { Stack } from "expo-router";
+import { type Href, Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useRef } from "react";
+import { AuthLoadingScreen } from "@/components/AuthLoadingScreen";
+import { useProfileStatus } from "@/hooks/useProfileStatus";
 import { anonymizeUserId } from "@/lib/anonymize";
+import { ROUTES } from "@/lib/routes";
 import { setSignedInHint } from "@/lib/storage";
 import { upsertUser } from "@/lib/users";
 
 export default function AppLayout() {
   const { user } = useUser();
+  const router = useRouter();
+  const segments = useSegments();
   const lastSyncedUid = useRef<string | null>(null);
+  const { loading: profileLoading, isComplete: profileComplete } =
+    useProfileStatus(user?.id);
+
+  const onOnboarding = (segments as string[]).includes("onboarding");
+
+  useEffect(() => {
+    if (!user || profileLoading) return;
+
+    if (!profileComplete && !onOnboarding) {
+      router.replace(ROUTES.onboarding as Href);
+      return;
+    }
+
+    if (profileComplete && onOnboarding) {
+      router.replace(ROUTES.home);
+    }
+  }, [user, profileLoading, profileComplete, onOnboarding, router]);
 
   useEffect(() => {
     if (!user) return;
@@ -62,6 +84,10 @@ export default function AppLayout() {
         lastSyncedUid.current = null;
       });
   }, [user]);
+
+  if (user && profileLoading) {
+    return <AuthLoadingScreen />;
+  }
 
   return (
     <Stack
